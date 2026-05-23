@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Descargar Registros</title>
+
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body{
+            min-height:100vh;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            padding:20px;
+        }
+
+        .card{
+            width:100%;
+            max-width:500px;
+            background:#ffffff;
+            border-radius:20px;
+            padding:40px;
+            box-shadow:0 10px 40px rgba(0,0,0,0.25);
+        }
+
+        .logo{
+            width:80px;
+            height:80px;
+            margin:0 auto 20px;
+            background:#2563eb;
+            border-radius:20px;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            color:white;
+            font-size:38px;
+            font-weight:bold;
+        }
+
+        h1{
+            text-align:center;
+            color:#0f172a;
+            margin-bottom:10px;
+            font-size:28px;
+        }
+
+        .descripcion{
+            text-align:center;
+            color:#64748b;
+            margin-bottom:35px;
+            line-height:1.5;
+        }
+
+        label{
+            display:block;
+            margin-bottom:10px;
+            color:#0f172a;
+            font-weight:bold;
+        }
+
+        select{
+            width:100%;
+            padding:14px;
+            border-radius:12px;
+            border:1px solid #cbd5e1;
+            font-size:16px;
+            outline:none;
+            margin-bottom:25px;
+            transition:0.3s;
+        }
+
+        select:focus{
+            border-color:#2563eb;
+            box-shadow:0 0 0 4px rgba(37,99,235,0.15);
+        }
+
+        button{
+            width:100%;
+            padding:15px;
+            border:none;
+            border-radius:12px;
+            background:#2563eb;
+            color:white;
+            font-size:16px;
+            font-weight:bold;
+            cursor:pointer;
+            transition:0.3s;
+        }
+
+        button:hover{
+            background:#1d4ed8;
+            transform:translateY(-2px);
+        }
+
+        .footer{
+            margin-top:25px;
+            text-align:center;
+            font-size:14px;
+            color:#94a3b8;
+        }
+
+        @media(max-width:600px){
+
+            .card{
+                padding:30px 20px;
+            }
+
+            h1{
+                font-size:24px;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+
+        <div class="logo">
+            📄
+        </div>
+
+        <h1>Descargar Registros</h1>
+
+        <p class="descripcion">
+            Seleccione un evento para generar y descargar automáticamente el archivo Excel con los registros disponibles.
+        </p>
+
+        <form action="/descargar" method="get">
+
+            <label for="evento">
+                Evento
+            </label>
+
+            <select name="evento" id="evento" required>
+
+                <option value="" disabled selected>
+                    Seleccione un evento
+                </option>
+
+                {% for evento in eventos %}
+                    <option value="{{ evento }}">
+                        {{ evento }}
+                    </option>
+                {% endfor %}
+
+            </select>
+
+            <button type="submit">
+                Descargar Excel
+            </button>
+
+        </form>
+
+        <div class="footer">
+            Sistema de Registros • San Vicente Centenario
+        </div>
+
+    </div>
+
+</body>
+</html>
