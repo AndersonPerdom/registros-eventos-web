@@ -59,13 +59,12 @@ def descargar_excel():
     conn.close()
 
     wb = Workbook()
-    ws = wb.active
-    ws.title = evento[:31]
+    wb.remove(wb.active)
 
     headers = ["Número", "Nombre", "Identidad", "Firma"]
-    ws.append(headers)
 
     bold = Font(bold=True)
+    title_font = Font(bold=True, size=18)
     center = Alignment(horizontal="center", vertical="center")
     border = Border(
         left=Side(style="thin"),
@@ -74,24 +73,50 @@ def descargar_excel():
         bottom=Side(style="thin")
     )
 
-    for cell in ws[1]:
-        cell.font = bold
-        cell.alignment = center
-        cell.border = border
+    registros_por_hoja = 20
 
-    for i, registro in enumerate(registros, start=1):
-        nombre, identidad = registro
-        ws.append([i, nombre, identidad, ""])
+    for hoja_num, inicio in enumerate(range(0, len(registros), registros_por_hoja), start=1):
+        parte = registros[inicio:inicio + registros_por_hoja]
 
-    for row in ws.iter_rows():
-        for cell in row:
+        ws = wb.create_sheet(title=f"{evento[:25]} {hoja_num}")
+
+        ws.merge_cells("A1:D1")
+        ws["A1"] = evento.upper()
+        ws["A1"].font = title_font
+        ws["A1"].alignment = center
+
+        ws.append([])
+        ws.append(headers)
+
+        for cell in ws[3]:
+            cell.font = bold
+            cell.alignment = center
             cell.border = border
-            cell.alignment = Alignment(vertical="center")
 
-    ws.column_dimensions["A"].width = 10
-    ws.column_dimensions["B"].width = 40
-    ws.column_dimensions["C"].width = 20
-    ws.column_dimensions["D"].width = 30
+        for i, registro in enumerate(parte, start=inicio + 1):
+            nombre, identidad = registro
+            ws.append([i, nombre, identidad, ""])
+
+        for row in ws.iter_rows(min_row=3, max_row=ws.max_row, min_col=1, max_col=4):
+            for cell in row:
+                cell.border = border
+                cell.alignment = Alignment(vertical="center")
+
+        ws.column_dimensions["A"].width = 10
+        ws.column_dimensions["B"].width = 42
+        ws.column_dimensions["C"].width = 22
+        ws.column_dimensions["D"].width = 35
+
+        ws.row_dimensions[1].height = 30
+
+    if len(registros) == 0:
+        ws = wb.create_sheet(title=evento[:31])
+        ws.merge_cells("A1:D1")
+        ws["A1"] = evento.upper()
+        ws["A1"].font = title_font
+        ws["A1"].alignment = center
+        ws.append([])
+        ws.append(headers)
 
     output = BytesIO()
     wb.save(output)
@@ -105,7 +130,6 @@ def descargar_excel():
         download_name=filename,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
