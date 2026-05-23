@@ -135,18 +135,18 @@ def descargar_excel():
                 ws.append([i, nombre, identidad, ""])
 
             for row in ws.iter_rows(
-                min_row=3,
-                max_row=ws.max_row,
-                min_col=1,
-                max_col=4
-            ):
-                for cell in row:
-                    cell.border = border
+    min_row=3,
+    max_row=ws.max_row,
+    min_col=1,
+    max_col=4
+):
+    for cell in row:
+        cell.border = border
 
-                    if cell.column == 1:
-                        cell.alignment = left_center
-                    else:
-                        cell.alignment = Alignment(vertical="center")
+        cell.alignment = Alignment(
+            horizontal="left",
+            vertical="center"
+        )
 
             ws.column_dimensions["A"].width = 10
             ws.column_dimensions["B"].width = 42
