@@ -153,10 +153,10 @@ def descargar_excel():
     # ==================================================
 
     blue_fill = PatternFill(
-        start_color="0D47A1",
-        end_color="0D47A1",
-        fill_type="solid"
-    )
+    start_color="0070C0",
+    end_color="0070C0",
+    fill_type="solid"
+)
 
     border = Border(
         left=Side(style="thin"),
