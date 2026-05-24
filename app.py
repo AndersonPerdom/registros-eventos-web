@@ -1,12 +1,20 @@
 import os
 from io import BytesIO
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from flask import Flask, render_template, send_file, request
 from dotenv import load_dotenv
 import psycopg2
+
 from openpyxl import Workbook
-from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
+from openpyxl.styles import (
+    Font,
+    Alignment,
+    Border,
+    Side,
+    PatternFill
+)
 
 
 load_dotenv()
@@ -15,6 +23,7 @@ app = Flask(__name__)
 
 
 def get_connection():
+
     return psycopg2.connect(
         host=os.getenv("DB_HOST"),
         port=os.getenv("DB_PORT", "5432"),
@@ -42,7 +51,10 @@ def index():
     cur.close()
     conn.close()
 
-    return render_template("index.html", eventos=eventos)
+    return render_template(
+        "index.html",
+        eventos=eventos
+    )
 
 
 @app.route("/descargar")
@@ -71,9 +83,13 @@ def descargar_excel():
     wb = Workbook()
     wb.remove(wb.active)
 
-    # =========================
-    # FECHA EN ESPAÑOL
-    # =========================
+    # ==================================================
+    # FECHA HONDURAS
+    # ==================================================
+
+    ahora = datetime.now(
+        ZoneInfo("America/Tegucigalpa")
+    )
 
     dias = {
         "Monday": "Lunes",
@@ -100,19 +116,29 @@ def descargar_excel():
         12: "Diciembre"
     }
 
-    ahora = datetime.now()
+    dia_semana = dias[
+        ahora.strftime("%A")
+    ]
 
-    dia_semana = dias[ahora.strftime("%A")]
     dia = ahora.day
     mes = meses[ahora.month]
     anio = ahora.year
 
-    fecha_actual = f"{dia_semana} {dia} de {mes} del {anio}"
+    fecha_actual = (
+        f"{dia_semana} "
+        f"{dia} de "
+        f"{mes} del "
+        f"{anio}"
+    )
 
-    # Nombre archivo DDMMYY
+    # Nombre archivo
     fecha_archivo = ahora.strftime("%d%m%y")
 
     evento_titulo = evento.capitalize()
+
+    # ==================================================
+    # HEADERS
+    # ==================================================
 
     headers = [
         "N°",
@@ -122,29 +148,21 @@ def descargar_excel():
         "Firma"
     ]
 
-    # =========================
+    # ==================================================
     # ESTILOS
-    # =========================
+    # ==================================================
 
     blue_fill = PatternFill(
-        start_color="1E88E5",
-        end_color="1E88E5",
+        start_color="0D47A1",
+        end_color="0D47A1",
         fill_type="solid"
     )
 
-    bold = Font(
-        bold=True
-    )
-
-    title_font = Font(
-        bold=True,
-        size=14,
-        color="FFFFFF"
-    )
-
-    header_font = Font(
-        bold=True,
-        color="FFFFFF"
+    border = Border(
+        left=Side(style="thin"),
+        right=Side(style="thin"),
+        top=Side(style="thin"),
+        bottom=Side(style="thin")
     )
 
     center = Alignment(
@@ -157,59 +175,76 @@ def descargar_excel():
         vertical="center"
     )
 
-    border = Border(
-        left=Side(style="thin"),
-        right=Side(style="thin"),
-        top=Side(style="thin"),
-        bottom=Side(style="thin")
+    title_font = Font(
+        bold=True,
+        size=15,
+        color="000000"
+    )
+
+    header_font = Font(
+        bold=True,
+        color="000000"
+    )
+
+    bold_font = Font(
+        bold=True
     )
 
     registros_por_hoja = 20
 
     partes = [
         registros[i:i + registros_por_hoja]
-        for i in range(0, len(registros), registros_por_hoja)
+        for i in range(
+            0,
+            len(registros),
+            registros_por_hoja
+        )
     ]
 
     if not partes:
         partes = [[]]
 
-    # =========================
+    # ==================================================
     # CREAR HOJAS
-    # =========================
+    # ==================================================
 
-    for hoja_num, parte in enumerate(partes, start=1):
+    for hoja_num, parte in enumerate(
+        partes,
+        start=1
+    ):
 
         ws = wb.create_sheet(
             title=f"{evento[:25]} {hoja_num}"
         )
 
-        # =========================
+        # ==============================================
         # TITULO
-        # =========================
+        # ==============================================
 
         ws.merge_cells("A1:E1")
 
-        ws["A1"] = f"Listado para {evento_titulo}"
+        ws["A1"] = (
+            f"Listado para {evento_titulo}"
+        )
 
         ws["A1"].font = title_font
         ws["A1"].alignment = center
         ws["A1"].fill = blue_fill
 
-        # =========================
+        # ==============================================
         # MOTIVO
-        # =========================
+        # ==============================================
 
         ws.merge_cells("A2:E2")
 
         ws["A2"] = "Motivo:"
 
-        ws["A2"].font = bold
+        ws["A2"].font = bold_font
         ws["A2"].alignment = left_center
 
-        # =========================
+        # ==============================================
         # LUGAR
-        # =========================
+        # ==============================================
 
         ws.merge_cells("A3:E3")
 
@@ -218,23 +253,23 @@ def descargar_excel():
             "Depto. Santa Bárbara"
         )
 
-        ws["A3"].font = bold
+        ws["A3"].font = bold_font
         ws["A3"].alignment = left_center
 
-        # =========================
+        # ==============================================
         # FECHA
-        # =========================
+        # ==============================================
 
         ws.merge_cells("A4:E4")
 
         ws["A4"] = fecha_actual
 
-        ws["A4"].font = bold
+        ws["A4"].font = bold_font
         ws["A4"].alignment = left_center
 
-        # =========================
+        # ==============================================
         # HEADERS
-        # =========================
+        # ==============================================
 
         ws.append(headers)
 
@@ -245,13 +280,16 @@ def descargar_excel():
             cell.border = border
             cell.fill = blue_fill
 
-        # =========================
+        # ==============================================
         # DATOS
-        # =========================
+        # ==============================================
 
         for i, registro in enumerate(
             parte,
-            start=(hoja_num - 1) * registros_por_hoja + 1
+            start=(
+                (hoja_num - 1)
+                * registros_por_hoja
+            ) + 1
         ):
 
             nombre, identidad, telefono = registro
@@ -264,9 +302,9 @@ def descargar_excel():
                 ""
             ])
 
-        # =========================
+        # ==============================================
         # ESTILOS TABLA
-        # =========================
+        # ==============================================
 
         for row in ws.iter_rows(
             min_row=6,
@@ -280,9 +318,9 @@ def descargar_excel():
                 cell.border = border
                 cell.alignment = left_center
 
-        # =========================
-        # ANCHO COLUMNAS
-        # =========================
+        # ==============================================
+        # TAMAÑO COLUMNAS
+        # ==============================================
 
         ws.column_dimensions["A"].width = 8
         ws.column_dimensions["B"].width = 42
@@ -290,11 +328,11 @@ def descargar_excel():
         ws.column_dimensions["D"].width = 18
         ws.column_dimensions["E"].width = 35
 
-        ws.row_dimensions[1].height = 26
+        ws.row_dimensions[1].height = 28
 
-    # =========================
-    # GENERAR ARCHIVO
-    # =========================
+    # ==================================================
+    # EXPORTAR
+    # ==================================================
 
     output = BytesIO()
 
@@ -302,15 +340,18 @@ def descargar_excel():
 
     output.seek(0)
 
-    filename = f"{evento}_registros_{fecha_archivo}.xlsx"
+    filename = (
+        f"{evento}_registros_"
+        f"{fecha_archivo}.xlsx"
+    )
 
     return send_file(
         output,
         as_attachment=True,
         download_name=filename,
         mimetype=(
-            "application/"
-            "vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            "application/vnd.openxmlformats-"
+            "officedocument.spreadsheetml.sheet"
         )
     )
 
@@ -319,5 +360,7 @@ if __name__ == "__main__":
 
     app.run(
         host="0.0.0.0",
-        port=int(os.environ.get("PORT", 5000))
+        port=int(
+            os.environ.get("PORT", 5000)
+        )
     )
