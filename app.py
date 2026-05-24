@@ -69,8 +69,41 @@ def descargar_excel():
     wb = Workbook()
     wb.remove(wb.active)
 
-    fecha_actual = datetime.now().strftime("%m/%d/%y")
-    fecha_archivo = datetime.now().strftime("%m%d%y")
+  dias = {
+    "Monday": "Lunes",
+    "Tuesday": "Martes",
+    "Wednesday": "Miércoles",
+    "Thursday": "Jueves",
+    "Friday": "Viernes",
+    "Saturday": "Sábado",
+    "Sunday": "Domingo"
+}
+
+meses = {
+    1: "Enero",
+    2: "Febrero",
+    3: "Marzo",
+    4: "Abril",
+    5: "Mayo",
+    6: "Junio",
+    7: "Julio",
+    8: "Agosto",
+    9: "Septiembre",
+    10: "Octubre",
+    11: "Noviembre",
+    12: "Diciembre"
+}
+
+ahora = datetime.now()
+
+dia_semana = dias[ahora.strftime("%A")]
+dia = ahora.day
+mes = meses[ahora.month]
+anio = ahora.year
+
+fecha_actual = f"{dia_semana} {dia} de {mes} del {anio}"
+
+   fecha_archivo = datetime.now().strftime("%d%m%y")
     evento_titulo = evento.capitalize()
 
     headers = ["N°", "Nombre", "DNI", "N° Teléfono", "Firma"]
