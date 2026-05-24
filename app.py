@@ -26,6 +26,7 @@ def get_connection():
 
 @app.route("/")
 def index():
+
     conn = get_connection()
     cur = conn.cursor()
 
@@ -46,6 +47,7 @@ def index():
 
 @app.route("/descargar")
 def descargar_excel():
+
     evento = request.args.get("evento")
 
     if not evento:
@@ -69,44 +71,60 @@ def descargar_excel():
     wb = Workbook()
     wb.remove(wb.active)
 
-  dias = {
-    "Monday": "Lunes",
-    "Tuesday": "Martes",
-    "Wednesday": "Miércoles",
-    "Thursday": "Jueves",
-    "Friday": "Viernes",
-    "Saturday": "Sábado",
-    "Sunday": "Domingo"
-}
+    # =========================
+    # FECHA EN ESPAÑOL
+    # =========================
 
-meses = {
-    1: "Enero",
-    2: "Febrero",
-    3: "Marzo",
-    4: "Abril",
-    5: "Mayo",
-    6: "Junio",
-    7: "Julio",
-    8: "Agosto",
-    9: "Septiembre",
-    10: "Octubre",
-    11: "Noviembre",
-    12: "Diciembre"
-}
+    dias = {
+        "Monday": "Lunes",
+        "Tuesday": "Martes",
+        "Wednesday": "Miércoles",
+        "Thursday": "Jueves",
+        "Friday": "Viernes",
+        "Saturday": "Sábado",
+        "Sunday": "Domingo"
+    }
 
-ahora = datetime.now()
+    meses = {
+        1: "Enero",
+        2: "Febrero",
+        3: "Marzo",
+        4: "Abril",
+        5: "Mayo",
+        6: "Junio",
+        7: "Julio",
+        8: "Agosto",
+        9: "Septiembre",
+        10: "Octubre",
+        11: "Noviembre",
+        12: "Diciembre"
+    }
 
-dia_semana = dias[ahora.strftime("%A")]
-dia = ahora.day
-mes = meses[ahora.month]
-anio = ahora.year
+    ahora = datetime.now()
 
-fecha_actual = f"{dia_semana} {dia} de {mes} del {anio}"
+    dia_semana = dias[ahora.strftime("%A")]
+    dia = ahora.day
+    mes = meses[ahora.month]
+    anio = ahora.year
 
-   fecha_archivo = datetime.now().strftime("%d%m%y")
+    fecha_actual = f"{dia_semana} {dia} de {mes} del {anio}"
+
+    # Nombre archivo DDMMYY
+    fecha_archivo = ahora.strftime("%d%m%y")
+
     evento_titulo = evento.capitalize()
 
-    headers = ["N°", "Nombre", "DNI", "N° Teléfono", "Firma"]
+    headers = [
+        "N°",
+        "Nombre",
+        "DNI",
+        "N° Teléfono",
+        "Firma"
+    ]
+
+    # =========================
+    # ESTILOS
+    # =========================
 
     blue_fill = PatternFill(
         start_color="1E88E5",
@@ -114,11 +132,30 @@ fecha_actual = f"{dia_semana} {dia} de {mes} del {anio}"
         fill_type="solid"
     )
 
-    bold = Font(bold=True)
-    title_font = Font(bold=True, size=14)
+    bold = Font(
+        bold=True
+    )
 
-    center = Alignment(horizontal="center", vertical="center")
-    left_center = Alignment(horizontal="left", vertical="center")
+    title_font = Font(
+        bold=True,
+        size=14,
+        color="FFFFFF"
+    )
+
+    header_font = Font(
+        bold=True,
+        color="FFFFFF"
+    )
+
+    center = Alignment(
+        horizontal="center",
+        vertical="center"
+    )
+
+    left_center = Alignment(
+        horizontal="left",
+        vertical="center"
+    )
 
     border = Border(
         left=Side(style="thin"),
@@ -137,59 +174,115 @@ fecha_actual = f"{dia_semana} {dia} de {mes} del {anio}"
     if not partes:
         partes = [[]]
 
+    # =========================
+    # CREAR HOJAS
+    # =========================
+
     for hoja_num, parte in enumerate(partes, start=1):
-        ws = wb.create_sheet(title=f"{evento[:25]} {hoja_num}")
+
+        ws = wb.create_sheet(
+            title=f"{evento[:25]} {hoja_num}"
+        )
+
+        # =========================
+        # TITULO
+        # =========================
 
         ws.merge_cells("A1:E1")
+
         ws["A1"] = f"Listado para {evento_titulo}"
+
         ws["A1"].font = title_font
         ws["A1"].alignment = center
         ws["A1"].fill = blue_fill
 
+        # =========================
+        # MOTIVO
+        # =========================
+
         ws.merge_cells("A2:E2")
+
         ws["A2"] = "Motivo:"
+
         ws["A2"].font = bold
         ws["A2"].alignment = left_center
 
+        # =========================
+        # LUGAR
+        # =========================
+
         ws.merge_cells("A3:E3")
-        ws["A3"] = "Lugar: San Vicente Centenario, Depto. Santa Bárbara"
+
+        ws["A3"] = (
+            "Lugar: San Vicente Centenario, "
+            "Depto. Santa Bárbara"
+        )
+
         ws["A3"].font = bold
         ws["A3"].alignment = left_center
 
+        # =========================
+        # FECHA
+        # =========================
+
         ws.merge_cells("A4:E4")
+
         ws["A4"] = fecha_actual
+
         ws["A4"].font = bold
         ws["A4"].alignment = left_center
+
+        # =========================
+        # HEADERS
+        # =========================
 
         ws.append(headers)
 
         for cell in ws[5]:
-            cell.font = bold
+
+            cell.font = header_font
             cell.alignment = center
             cell.border = border
             cell.fill = blue_fill
+
+        # =========================
+        # DATOS
+        # =========================
 
         for i, registro in enumerate(
             parte,
             start=(hoja_num - 1) * registros_por_hoja + 1
         ):
+
             nombre, identidad, telefono = registro
-            ws.append([i, nombre, identidad, telefono, ""])
+
+            ws.append([
+                i,
+                nombre,
+                identidad,
+                telefono,
+                ""
+            ])
+
+        # =========================
+        # ESTILOS TABLA
+        # =========================
 
         for row in ws.iter_rows(
-            min_row=5,
+            min_row=6,
             max_row=ws.max_row,
             min_col=1,
             max_col=5
         ):
+
             for cell in row:
+
                 cell.border = border
                 cell.alignment = left_center
 
-        for cell in ws[5]:
-            cell.font = bold
-            cell.alignment = center
-            cell.fill = blue_fill
+        # =========================
+        # ANCHO COLUMNAS
+        # =========================
 
         ws.column_dimensions["A"].width = 8
         ws.column_dimensions["B"].width = 42
@@ -197,10 +290,16 @@ fecha_actual = f"{dia_semana} {dia} de {mes} del {anio}"
         ws.column_dimensions["D"].width = 18
         ws.column_dimensions["E"].width = 35
 
-        ws.row_dimensions[1].height = 24
+        ws.row_dimensions[1].height = 26
+
+    # =========================
+    # GENERAR ARCHIVO
+    # =========================
 
     output = BytesIO()
+
     wb.save(output)
+
     output.seek(0)
 
     filename = f"{evento}_registros_{fecha_archivo}.xlsx"
@@ -209,11 +308,15 @@ fecha_actual = f"{dia_semana} {dia} de {mes} del {anio}"
         output,
         as_attachment=True,
         download_name=filename,
-        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        mimetype=(
+            "application/"
+            "vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
     )
 
 
 if __name__ == "__main__":
+
     app.run(
         host="0.0.0.0",
         port=int(os.environ.get("PORT", 5000))
