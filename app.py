@@ -54,7 +54,7 @@ def descargar_excel():
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT nombre, identidad
+        SELECT nombre, identidad, telefono
         FROM registros_eventos
         WHERE LOWER(evento) = LOWER(%s)
         ORDER BY nombre;
@@ -68,7 +68,7 @@ def descargar_excel():
     wb = Workbook()
     wb.remove(wb.active)
 
-    headers = ["Número", "Nombre", "Identidad", "Firma"]
+    headers = ["Número", "Nombre", "Identidad","Identidad", "Firma"]
 
     bold = Font(bold=True)
     title_font = Font(bold=True, size=18)
@@ -131,8 +131,8 @@ def descargar_excel():
                 cell.border = border
 
             for i, registro in enumerate(parte, start=inicio + 1):
-                nombre, identidad = registro
-                ws.append([i, nombre, identidad, ""])
+                nombre, identidad,telefono = registro
+                ws.append([i, nombre, identidad,telefono, ""])
 
             for row in ws.iter_rows(
                 min_row=3,
