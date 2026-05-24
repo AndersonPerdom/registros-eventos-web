@@ -1,11 +1,12 @@
 import os
 from io import BytesIO
+from datetime import datetime
 
 from flask import Flask, render_template, send_file, request
 from dotenv import load_dotenv
 import psycopg2
 from openpyxl import Workbook
-from openpyxl.styles import Font, Alignment, Border, Side
+from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 
 
 load_dotenv()
@@ -68,10 +69,20 @@ def descargar_excel():
     wb = Workbook()
     wb.remove(wb.active)
 
-    headers = ["Número", "Nombre", "Identidad","Identidad", "Firma"]
+    fecha_actual = datetime.now().strftime("%m/%d/%y")
+    fecha_archivo = datetime.now().strftime("%m%d%y")
+    evento_titulo = evento.capitalize()
+
+    headers = ["N°", "Nombre", "DNI", "N° Teléfono", "Firma"]
+
+    blue_fill = PatternFill(
+        start_color="1E88E5",
+        end_color="1E88E5",
+        fill_type="solid"
+    )
 
     bold = Font(bold=True)
-    title_font = Font(bold=True, size=18)
+    title_font = Font(bold=True, size=14)
 
     center = Alignment(horizontal="center", vertical="center")
     left_center = Alignment(horizontal="left", vertical="center")
@@ -85,77 +96,81 @@ def descargar_excel():
 
     registros_por_hoja = 20
 
-    if len(registros) == 0:
-        ws = wb.create_sheet(title=evento[:31])
+    partes = [
+        registros[i:i + registros_por_hoja]
+        for i in range(0, len(registros), registros_por_hoja)
+    ]
 
-        ws.merge_cells("A1:D1")
-        ws["A1"] = evento.upper()
+    if not partes:
+        partes = [[]]
+
+    for hoja_num, parte in enumerate(partes, start=1):
+        ws = wb.create_sheet(title=f"{evento[:25]} {hoja_num}")
+
+        ws.merge_cells("A1:E1")
+        ws["A1"] = f"Listado para {evento_titulo}"
         ws["A1"].font = title_font
         ws["A1"].alignment = center
+        ws["A1"].fill = blue_fill
 
-        ws.append([])
+        ws.merge_cells("A2:E2")
+        ws["A2"] = "Motivo:"
+        ws["A2"].font = bold
+        ws["A2"].alignment = left_center
+
+        ws.merge_cells("A3:E3")
+        ws["A3"] = "Lugar: San Vicente Centenario, Depto. Santa Bárbara"
+        ws["A3"].font = bold
+        ws["A3"].alignment = left_center
+
+        ws.merge_cells("A4:E4")
+        ws["A4"] = fecha_actual
+        ws["A4"].font = bold
+        ws["A4"].alignment = left_center
+
         ws.append(headers)
 
-        for cell in ws[3]:
+        for cell in ws[5]:
             cell.font = bold
             cell.alignment = center
             cell.border = border
+            cell.fill = blue_fill
 
-        ws.column_dimensions["A"].width = 10
+        for i, registro in enumerate(
+            parte,
+            start=(hoja_num - 1) * registros_por_hoja + 1
+        ):
+            nombre, identidad, telefono = registro
+            ws.append([i, nombre, identidad, telefono, ""])
+
+        for row in ws.iter_rows(
+            min_row=5,
+            max_row=ws.max_row,
+            min_col=1,
+            max_col=5
+        ):
+            for cell in row:
+                cell.border = border
+                cell.alignment = left_center
+
+        for cell in ws[5]:
+            cell.font = bold
+            cell.alignment = center
+            cell.fill = blue_fill
+
+        ws.column_dimensions["A"].width = 8
         ws.column_dimensions["B"].width = 42
         ws.column_dimensions["C"].width = 22
-        ws.column_dimensions["D"].width = 35
+        ws.column_dimensions["D"].width = 18
+        ws.column_dimensions["E"].width = 35
 
-        ws.row_dimensions[1].height = 30
-
-    else:
-        for hoja_num, inicio in enumerate(
-            range(0, len(registros), registros_por_hoja),
-            start=1
-        ):
-            parte = registros[inicio:inicio + registros_por_hoja]
-
-            ws = wb.create_sheet(title=f"{evento[:25]} {hoja_num}")
-
-            ws.merge_cells("A1:D1")
-            ws["A1"] = evento.upper()
-            ws["A1"].font = title_font
-            ws["A1"].alignment = center
-
-            ws.append([])
-            ws.append(headers)
-
-            for cell in ws[3]:
-                cell.font = bold
-                cell.alignment = center
-                cell.border = border
-
-            for i, registro in enumerate(parte, start=inicio + 1):
-                nombre, identidad,telefono = registro
-                ws.append([i, nombre, identidad,telefono, ""])
-
-            for row in ws.iter_rows(
-                min_row=3,
-                max_row=ws.max_row,
-                min_col=1,
-                max_col=4
-            ):
-                for cell in row:
-                    cell.border = border
-                    cell.alignment = left_center
-
-            ws.column_dimensions["A"].width = 10
-            ws.column_dimensions["B"].width = 42
-            ws.column_dimensions["C"].width = 22
-            ws.column_dimensions["D"].width = 35
-
-            ws.row_dimensions[1].height = 30
+        ws.row_dimensions[1].height = 24
 
     output = BytesIO()
     wb.save(output)
     output.seek(0)
 
-    filename = f"{evento}_registros.xlsx"
+    filename = f"{evento}_registros_{fecha_archivo}.xlsx"
 
     return send_file(
         output,
